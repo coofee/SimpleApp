@@ -6,6 +6,8 @@ import { observer } from 'mobx-react/native';
 
 import { rootStore } from './Store'
 import colors from './utils/colors';
+import FoldView from './component/foldview'
+import views from './utils/views';
 
 @observer
 export default class Recents extends Component {
@@ -60,10 +62,15 @@ class RecentMessageListView extends Component {
         super(props)
 
         this.state = {
-            refreshing: false
+            refreshing: false,
+            fold: {
+                expand: true,
+                top: -1,
+            }
         };
 
-        this.stickyHeaderIndices = [1, 5]
+        this.foldViewIndex = 2;
+        this.stickyHeaderIndices = [0, this.foldViewIndex]
     }
 
     componentWillUnmount() {
@@ -87,7 +94,7 @@ class RecentMessageListView extends Component {
         let stickyHeader = this.isStickyHeader(index) ? 'STICKY HEADER' : '';
 
         return (
-            <View style={{ backgroundColor: colors.mintcream}}>
+            <View style={{ backgroundColor: colors.mintcream }}>
                 <Text index={index} style={[style, styleYahei]}>{stickyHeader} MicroSoft YaHei: 在pop之前用DeviceEventEmitter发出事件，首页监听事件。或者在redux框架下面也可以解决这种跨界面交互的问题。
                 componentWillMount，componentDidMount只有在component被创建的时候才会调用，返回时component是已存在的，push的时候没有被销毁，不是新创建出来的。</Text>
 
@@ -97,8 +104,44 @@ class RecentMessageListView extends Component {
         )
     }
 
+    _renderFoldView = (item, index) => {
+        const handleView = () => (<Text style={{ backgroundColor: colors.lime, height: 30, textAlign: 'center' }} >Handle View</Text>)
+        const contentView = () => (<Text style={{ backgroundColor: colors.bisque, height: 50, textAlign: 'center' }} >Content View</Text>)
+
+        const foldHandle = (expand) => {
+            if (expand) {
+                console.log('onExpand...')
+            } else {
+                console.log('onClose...')
+            }
+
+            this.setState(prevState => {
+                prevState.fold.expand = expand;
+                console.log('foldHandle: expand=' + expand)
+
+                return prevState;
+            });
+        };
+
+        return (
+            <FoldView
+                ref={(ref) => { this.foldRef = ref }}
+                onLayout={(e) => { console.log('FoldView.onLayout()=' + JSON.stringify(e.nativeEvent.layout)) }}
+                style={{ backgroundColor: colors.tan, justifyContent: 'center', alignItems: 'center' }}
+                HandleView={handleView}
+                ContentView={contentView}
+                expand={this.state.fold.expand}
+                onExpand={(e) => { foldHandle(true) }}
+                onClose={(e) => { foldHandle(false) }} />
+        );
+    }
+
     renderItem = ({ item, index }) => {
         console.log('renderItem; item=' + item + ', index=' + index);
+        if (index + 1 == this.foldViewIndex) {
+            // 因为有一个header;
+            return this._renderFoldView(item, index);
+        }
 
         if (index % 5 === 0) {
             return this._renderMultilineText(item, index);
@@ -111,7 +154,7 @@ class RecentMessageListView extends Component {
         let stickyHeader = this.isStickyHeader(0) ? 'Sticky Header' : 'Header';
 
         return (
-            <View style={{ height: 100, backgroundColor: colors.pink, alignItems: 'center', justifyContent: 'center' }}>
+            <View ref={(ref) => { this.headerRef = ref }} style={{ height: 100, backgroundColor: colors.pink, alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={{ fontSize: 30 }}>{stickyHeader}</Text>
             </View>
         );
@@ -161,10 +204,57 @@ class RecentMessageListView extends Component {
         return index;
     }
 
+    _onScroll = (e) => {
+        console.log('onScroll; contentOffset=' + JSON.stringify(e.nativeEvent.contentOffset))
+        // console.log('onScorll; foldRef=' + this.foldRef);
+        // console.dir(this.foldRef)
+        // console.log('onScroll; this.refs.headerRef=' + this.headerRef)
+        // console.dir(this.headerRef)
+
+        // views.layout(this.listRef).then(data => console.log('listRef.location=' + JSON.stringify(data)))
+        // views.layout(this.headerRef).then(data => console.log('headerRef.location=' + JSON.stringify(data)))
+        // views.layout(this.foldRef).then(data => console.log('foldRef.location=' + JSON.stringify(data)));
+        // views.layoutRelativeTo(this.headerRef, this.listRef).then(data => console.log('headerRef.location.relative=' + JSON.stringify(data)));
+        // views.layoutRelativeTo(this.foldRef, this.listRef).then(data => console.log('foldRef.location.relative=' + JSON.stringify(data)));
+
+        let contentOffset = e.nativeEvent.contentOffset.y;
+        let foldTop = this.state.fold.top;
+        console.log('contentOffset=' + JSON.stringify(contentOffset) + ', foldTop=' + foldTop);
+
+        if (foldTop === -1) {
+            views
+                .layoutRelativeTo(this.foldRef, this.listRef)
+                .then(data => {
+                    this.setState(prevState => {
+                        if (prevState.fold.top !== -1) {
+                            return
+                        }
+                        console.log('try set foldTop=' + foldTop)
+                        return {
+                            fold: {
+                                expand: data.top > contentOffset,
+                                top: data.top,
+                            }
+                        };
+                    });
+
+                    this.setState();
+                });
+        } else {
+            this.setState({
+                fold: {
+                    expand: foldTop > contentOffset,
+                    top: foldTop,
+                }
+            })
+        }
+    }
+
     render() {
         const { store } = this.props;
         return (
             <FlatList
+                ref={(ref) => { this.listRef = ref }}
                 data={store.dataSource}
                 renderItem={this.renderItem}
                 enableEmptySections={false}
@@ -179,6 +269,7 @@ class RecentMessageListView extends Component {
                 onEndReachedThreshold={0.3}
                 stickyHeaderIndices={this.stickyHeaderIndices}
                 stickySectionHeadersEnabled={true}
+                onScroll={this._onScroll}
             />
         );
     }
