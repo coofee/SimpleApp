@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 
-import { View, Text, Button, StyleSheet, ScrollView } from 'react-native'
+import { View, Text, Button, StyleSheet, ScrollView, Image, Platform } from 'react-native'
 
 import { NavigationActions } from 'react-navigation'
 
@@ -19,6 +19,67 @@ export default class Home extends Component {
         // };
     }
 
+    renderImages() {
+        const imageWidth = 40;
+        const borderWidth = 2;
+
+
+        const views = [];
+
+        let nested = [1, 2, 3].map((item, index) => {
+
+            return (
+                // 使用原生image的实现圆形带边框的图片时，会出现毛边，所以我们这里使用嵌套view的方式实现;
+                <View style={{
+                    zIndex: 50 - index,
+                    width: imageWidth + borderWidth * 2,
+                    height: imageWidth + borderWidth * 2,
+                    ...Platform.select({ android: { borderRadius: imageWidth + borderWidth * 2 }, ios: { borderRadius: imageWidth / 2 + borderWidth } }),
+                    marginLeft: index === 0 ? 0 :  -7,
+                    backgroundColor: '#fff',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                }}>
+                    <Image
+                        key={index}
+                        source={require('./images/pic.png')}
+                        // source={{uri: 'http://www.baidu.com/img/bd_logo1.png'}}
+                        style={{
+                            width: imageWidth,
+                            height: imageWidth,
+                            ...Platform.select({ android: { borderRadius: imageWidth }, ios: { borderRadius: imageWidth / 2 } }),
+                        }}
+                    />
+                </View>
+            );
+        })
+
+        views.push(nested)
+
+
+        let origins = [1, 2, 3].map((item, index) => {
+            return (
+                <Image
+                    key={index}
+                    source={require('./images/pic.png')}
+                    // source={{uri: 'http://www.baidu.com/img/bd_logo1.png'}}
+                    style={{
+                        zIndex: 50 - index,
+                        width: imageWidth,
+                        height: imageWidth,
+                        marginLeft: index === 0 ? 0 : -7,
+                        borderWidth: 3,
+                        borderColor: '#fff',
+                        ...Platform.select({ android: { borderRadius: imageWidth }, ios: { borderRadius: imageWidth / 2 } }),
+                    }}
+                />
+            );
+        });
+
+        views.push(origins)
+        return views;
+    }
+
     render() {
         let testView = this.test();
 
@@ -28,6 +89,10 @@ export default class Home extends Component {
                 <View>
                     <Text> 主页 </Text>
                     <Button title="聊天" onPress={this.navigateChat} />
+
+                    <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', width: 400, height: 50 }}>
+                        {this.renderImages()}
+                    </View>
 
                     {testView}
                 </View>
