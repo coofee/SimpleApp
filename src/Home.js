@@ -35,7 +35,7 @@ export default class Home extends Component {
                     width: imageWidth + borderWidth * 2,
                     height: imageWidth + borderWidth * 2,
                     ...Platform.select({ android: { borderRadius: imageWidth + borderWidth * 2 }, ios: { borderRadius: imageWidth / 2 + borderWidth } }),
-                    marginLeft: index === 0 ? 0 :  -7,
+                    marginLeft: index === 0 ? 0 : -7,
                     backgroundColor: '#fff',
                     justifyContent: 'center',
                     alignItems: 'center',
@@ -55,6 +55,7 @@ export default class Home extends Component {
         })
 
         views.push(nested)
+        views.push(<View style={{ width: 10 }} />)
 
 
         let origins = [1, 2, 3].map((item, index) => {
@@ -69,6 +70,7 @@ export default class Home extends Component {
                         height: imageWidth,
                         marginLeft: index === 0 ? 0 : -7,
                         borderWidth: 3,
+                        // backgroundColor: '#fff',
                         borderColor: '#fff',
                         ...Platform.select({ android: { borderRadius: imageWidth }, ios: { borderRadius: imageWidth / 2 } }),
                     }}
@@ -90,7 +92,7 @@ export default class Home extends Component {
                     <Text> 主页 </Text>
                     <Button title="聊天" onPress={this.navigateChat} />
 
-                    <View style={{ flexDirection: 'row', justifyContent: 'center', alignItems: 'center', width: 400, height: 50 }}>
+                    <View style={{ flexDirection: 'row', alignSelf: 'stretch', justifyContent: 'center', alignItems: 'center', paddingVertical: 5 }}>
                         {this.renderImages()}
                     </View>
 
