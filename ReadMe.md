@@ -60,3 +60,5 @@ react-native start --reset-cache
 ```
   
  [链接：https://github.com/facebook/react-native/issues/13765](https://github.com/facebook/react-native/issues/13765)
+
+ [java bridge to c++ bridge commit](https://github.com/facebook/react-native/commit/1a690d56748eb4b6bf3a8c525ea761d3e3c9aea6)
